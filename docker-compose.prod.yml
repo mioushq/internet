@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-internet_porownywarka}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_URI: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-internet_porownywarka}
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET:?Set PAYLOAD_SECRET}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:?Set NEXT_PUBLIC_SITE_URL}
+      NEXT_PUBLIC_SITE_NAME: ${NEXT_PUBLIC_SITE_NAME:-Porównywarka Internetu}
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+      - web
+
+volumes:
+  postgres_data:
+
+networks:
+  internal:
+  web:

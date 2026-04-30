@@ -1,0 +1,49 @@
+{
+  "name": "internet-porownywarka",
+  "version": "1.0.0",
+  "description": "Porównywarka cen internetu światłowodowego - Polish internet price comparison platform",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "seed": "tsx seed/seed.ts",
+    "generate:types": "payload generate:types",
+    "generate:importmap": "payload generate:importmap",
+    "dev:log": "next dev 2>&1 | tee >(bash scripts/agents/error-logger.sh)",
+    "agent:check": "bash scripts/agents/check-typescript.sh && bash scripts/agents/check-collections.sh && bash scripts/agents/check-env.sh",
+    "agent:snapshot": "bash scripts/agents/snapshot.sh",
+    "agent:release": "bash scripts/agents/create-release.sh"
+  },
+  "keywords": ["internet", "comparison", "poland", "fiber", "seo"],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@payloadcms/db-postgres": "^3.84.1",
+    "@payloadcms/next": "^3.84.1",
+    "@payloadcms/plugin-seo": "^3.84.1",
+    "@payloadcms/richtext-lexical": "^3.84.1",
+    "@payloadcms/ui": "^3.84.1",
+    "graphql": "^16.13.2",
+    "next": "^16.2.4",
+    "payload": "^3.84.1",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@tailwindcss/postcss": "^4.2.4",
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.5.0",
+    "eslint": "^10.2.1",
+    "postcss": "^8.5.13",
+    "tailwindcss": "^4.2.4",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  }
+}
