@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.2.0 — 2025-05-01
+
+### Frontend Design (Liquid Glass)
+- **Nowy Layout i Tailwind:** Zmiana motywu na dark mode z efektem glassmorphism (`globals.css`, `layout.tsx`).
+- **Nawigacja Mobile:** Dodano dolny pasek nawigacyjny dla urządzeń mobilnych (App-like feel).
+- **Komponenty UI:** 
+  - `HeroSearch.tsx` z płynnymi animacjami i obsługą wyszukiwania miast.
+  - `CategoryCard.tsx` - szklane karty dla kategorii (Światłowód, 5G, itp.).
+  - `OfferCard.tsx` - komponent ofert (Sales Box) gotowy na dane z Payload CMS i afiliację.
+- **Dokumentacja UI:** Wygenerowano mockupy i spisano logikę designu w `docs/FRONTEND_DESIGN.md`.
+
+---
 ## v1.1.0 — 2025-05-01
 
 ### Rozbudowa backendu + Automatyzacja danych

@@ -1,6 +1,6 @@
 {
   "name": "internet-porownywarka",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Porównywarka cen internetu światłowodowego - Polish internet price comparison platform",
   "private": true,
   "scripts": {
@@ -16,7 +16,13 @@
     "agent:snapshot": "bash scripts/agents/snapshot.sh",
     "agent:release": "bash scripts/agents/create-release.sh"
   },
-  "keywords": ["internet", "comparison", "poland", "fiber", "seo"],
+  "keywords": [
+    "internet",
+    "comparison",
+    "poland",
+    "fiber",
+    "seo"
+  ],
   "author": "",
   "license": "ISC",
   "type": "module",
