@@ -1,5 +1,55 @@
 # Changelog
 
+## v1.5.2 — 2025-05-01
+
+### Bugfix: CMS Admin Panel Styling — NAPRAWIONY ✅
+
+**Root cause:** `@payloadcms/next@3.84.1` prekompiluje style do `dist/prod/styles.css` (eksport `@payloadcms/next/css`), ale żaden plik JS tego nie importuje. Fix z `@payloadcms/ui/scss/app.scss` ładował tylko bazę — brakowało Nav, StepNav, Login, Logo, template-minimal.
+
+**Fix:** Dodano dwa importy w `src/app/(payload)/layout.tsx`:
+```
+import '@payloadcms/next/css'
+import '@payloadcms/ui/scss/app.scss'
+```
+CSS wzrósł z 425 KB → 787 KB. Brakujące selektory (`.nav__link`, `.step-nav`, `.template-minimal`, `.login__brand`) — 51 wystąpień (wcześniej 0–1).
+
+---
+
+## v1.5.1 — 2025-05-01
+
+### Bugfix: CMS Admin Panel Styling (CZĘŚCIOWY)
+
+**Poprawki:**
+- **Fix `custom.scss`**: Usunięto override `:root --theme-elevation-*` variables
+- **Fix `payload.config.ts`**: Logo/Icon jako string paths
+- **Fix `next.config.ts`**: Dodano `allowedDevOrigins`
+- **Fix `globals.css`**: Import bez Tailwind Preflight, scope `html[lang="pl"]`
+
+---
+
+## v1.5.0 — 2025-05-01
+
+### Milestone 2: SEO + Static Generation
+
+**Static Generation (ISR-ready):**
+- `generateStaticParams` na `/[category]`, `/[category]/[city]`, `/miasta/[city]`, `/operator/[slug]`
+- Główne miasta (isMainCity) pre-renderowane per kategoria
+
+**Schema.org Structured Data:**
+- `WebSite` — z SearchAction (szukaj miasta)
+- `Organization` — logo, kontakt
+- `Product` + `Offer` — na stronie planu (cena PLN, prędkość Mbps)
+- `BreadcrumbList` — na wszystkich podstronach
+
+**Nowe komponenty SEO:**
+- `JsonLd` — uniwersalny JSON-LD + 5 helperów schema
+- `Breadcrumbs` — reusable z auto Schema.org BreadcrumbList
+
+**Inne:**
+- `public/robots.txt` — blokuje /admin, /api/, wskazuje sitemap
+
+---
+
 ## v1.4.0 — 2025-05-01
 
 ### Milestone 1: Spięcie Frontend ↔ CMS

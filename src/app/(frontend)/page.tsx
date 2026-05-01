@@ -2,6 +2,7 @@ import React from 'react';
 import HeroSearch from '@/components/home/HeroSearch';
 import CategoryCard from '@/components/home/CategoryCard';
 import OfferCard from '@/components/comparison/OfferCard';
+import JsonLd, { websiteSchema, organizationSchema } from '@/components/seo/JsonLd';
 import { getPayloadClient } from '@/lib/payload';
 
 export const metadata = {
@@ -50,6 +51,8 @@ export default async function HomePage() {
 
   return (
     <div className="container mx-auto px-4 pb-20">
+      <JsonLd data={websiteSchema()} />
+      <JsonLd data={organizationSchema()} />
       <HeroSearch cities={cities} />
       
       {/* Sekcja Kategorii */}

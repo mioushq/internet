@@ -5,7 +5,6 @@ import sharp from 'sharp'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
-import { Logo, Icon } from './src/components/admin/Logo'
 
 import { Users } from './src/collections/Users'
 import { Media } from './src/collections/Media'
@@ -42,8 +41,8 @@ export default buildConfig({
     },
     components: {
       graphics: {
-        Logo: Logo as any,
-        Icon: Icon as any,
+        Logo: '/src/components/admin/Logo#Logo',
+        Icon: '/src/components/admin/Logo#Icon',
       },
     },
     importMap: {

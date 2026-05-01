@@ -5,9 +5,16 @@ import { notFound } from 'next/navigation'
 import { getPayloadClient } from '@/lib/payload'
 import OfferCard from '@/components/comparison/OfferCard'
 import type { Media } from '@/payload-types'
+import Breadcrumbs from '@/components/seo/Breadcrumbs'
 
 type Props = {
   params: Promise<{ slug: string }>
+}
+
+export async function generateStaticParams() {
+  const payload = await getPayloadClient()
+  const ops = await payload.find({ collection: 'operators', where: { isActive: { equals: true } }, limit: 100 })
+  return ops.docs.map((op) => ({ slug: op.slug }))
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -69,6 +76,10 @@ export default async function OperatorPage({ params }: Props) {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <Breadcrumbs items={[
+        { label: operator.name, href: `/operator/${operator.slug}` },
+      ]} />
+
       {/* Header */}
       <div className="glass-panel rounded-2xl p-6 md:p-8 mb-8 flex flex-col md:flex-row items-center gap-6">
         <div className="w-24 h-24 bg-white rounded-xl flex-shrink-0 flex items-center justify-center p-3 shadow-inner">

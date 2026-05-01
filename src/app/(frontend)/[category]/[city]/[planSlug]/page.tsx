@@ -5,6 +5,8 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getPayloadClient } from '@/lib/payload'
 import type { Operator, Category, Media as MediaType } from '@/payload-types'
+import Breadcrumbs from '@/components/seo/Breadcrumbs'
+import JsonLd, { offerSchema } from '@/components/seo/JsonLd'
 
 type Props = {
   params: Promise<{ category: string; city: string; planSlug: string }>
@@ -52,16 +54,19 @@ export default async function PlanPage({ params }: Props) {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      {/* Breadcrumbs */}
-      <nav className="text-sm text-gray-500 mb-6 flex flex-wrap gap-1">
-        <Link href="/" className="hover:text-cyan-400 transition-colors">Strona główna</Link>
-        <span>/</span>
-        <Link href={`/${catSlug}`} className="hover:text-cyan-400 transition-colors">{cat?.name || catSlug}</Link>
-        <span>/</span>
-        <Link href={`/${catSlug}/${citySlug}`} className="hover:text-cyan-400 transition-colors capitalize">{citySlug.replace(/-/g, ' ')}</Link>
-        <span>/</span>
-        <span className="text-gray-400">{plan.name}</span>
-      </nav>
+      <Breadcrumbs items={[
+        { label: cat?.name || catSlug, href: `/${catSlug}` },
+        { label: citySlug.replace(/-/g, ' '), href: `/${catSlug}/${citySlug}` },
+        { label: plan.name, href: `/${catSlug}/${citySlug}/${plan.slug}` },
+      ]} />
+      <JsonLd data={offerSchema({
+        name: plan.name,
+        price: plan.pricing?.priceMonthly || 0,
+        operatorName: operator?.name || '',
+        speed: plan.speeds?.download || 0,
+        url: `${process.env.NEXT_PUBLIC_SITE_URL || ''}/${catSlug}/${citySlug}/${plan.slug}`,
+        technology: plan.technology || 'ftth',
+      })} />
 
       {/* Plan Card */}
       <div className="glass-panel rounded-2xl p-6 md:p-8 mb-8">

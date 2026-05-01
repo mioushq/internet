@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getPayloadClient } from '@/lib/payload'
 import OfferCard from '@/components/comparison/OfferCard'
+import Breadcrumbs from '@/components/seo/Breadcrumbs'
 
 type Props = {
   params: Promise<{ category: string }>
@@ -58,6 +59,7 @@ export default async function CategoryPage({ params }: Props) {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <Breadcrumbs items={[{ label: category.name, href: `/${category.urlPrefix}` }]} />
       <h1 className="text-3xl font-bold mb-2 text-white">{category.name}</h1>
       <p className="text-gray-400 mb-6">
         {category.shortDescription || `Porównaj najlepsze oferty ${category.name} od wszystkich operatorów w Polsce.`}

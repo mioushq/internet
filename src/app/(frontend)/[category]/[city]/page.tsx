@@ -3,9 +3,25 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getPayloadClient } from '@/lib/payload'
 import OfferCard from '@/components/comparison/OfferCard'
+import Breadcrumbs from '@/components/seo/Breadcrumbs'
 
 type Props = {
   params: Promise<{ category: string; city: string }>
+}
+
+export async function generateStaticParams() {
+  const payload = await getPayloadClient()
+  const [cats, cities] = await Promise.all([
+    payload.find({ collection: 'categories', where: { isActive: { equals: true } }, limit: 100 }),
+    payload.find({ collection: 'cities', where: { isActive: { equals: true }, isMainCity: { equals: true } }, limit: 50 }),
+  ])
+  const params: { category: string; city: string }[] = []
+  for (const cat of cats.docs) {
+    for (const city of cities.docs) {
+      params.push({ category: cat.urlPrefix, city: city.slug })
+    }
+  }
+  return params
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -67,6 +83,10 @@ export default async function CityCategoryPage({ params }: Props) {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <Breadcrumbs items={[
+        { label: category.name, href: `/${category.urlPrefix}` },
+        { label: city.name, href: `/${category.urlPrefix}/${city.slug}` },
+      ]} />
       <h1 className="text-3xl font-bold mb-2 text-white">{h1}</h1>
       <p className="text-gray-400 mb-6">
         Porównaj {plansRes.totalDocs} {plansRes.totalDocs === 1 ? 'ofertę' : 'ofert'} {category.name} od operatorów dostępnych w {city.name}.
