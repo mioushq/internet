@@ -35,9 +35,22 @@ export default async function HomePage() {
   });
   const promotedPlans = plansRes.docs;
 
+  // Pobranie miast do autocomplete
+  const citiesRes = await payload.find({
+    collection: 'cities',
+    where: { isActive: { equals: true } },
+    sort: '-population',
+    limit: 100,
+  });
+  const cities = citiesRes.docs.map((c) => ({
+    name: c.name,
+    slug: c.slug,
+    voivodeship: c.voivodeship,
+  }));
+
   return (
     <div className="container mx-auto px-4 pb-20">
-      <HeroSearch />
+      <HeroSearch cities={cities} />
       
       {/* Sekcja Kategorii */}
       <section className="mt-20 max-w-5xl mx-auto animate-[fade-in_0.5s_ease-out_0.2s_both]">

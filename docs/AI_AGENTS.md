@@ -58,7 +58,7 @@ Docker-based, hosting-agnostic.
 - **Payload CMS** → `/admin` panel + REST API + GraphQL API (auto-generowane z kolekcji)
 - **Next.js App Router** → SSR/SSG strony publiczne + API routes
 - **PostgreSQL** → baza danych (Drizzle ORM via Payload)
-- **12 kolekcji** CMS + **3 globale** (patrz `src/collections/` i `src/globals/`)
+- **19 kolekcji** CMS + **3 globale** (patrz `src/collections/` i `src/globals/`)
 
 ## Kluczowe Pliki
 

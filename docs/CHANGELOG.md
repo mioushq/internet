@@ -1,5 +1,30 @@
 # Changelog
 
+## v1.4.0 — 2025-05-01
+
+### Milestone 1: Spięcie Frontend ↔ CMS
+
+**Podstrony spięte z Payload CMS (Local API):**
+- `/oferty` — lista ofert z filtrami (prędkość, cena, technologia, operator, sort) + paginacja
+- `/miasta` — grid miast z CMS, podział na wojewódzkie/pozostałe, sortowanie wg populacji
+- `/miasta/[city]` — landing page miasta z ofertami, dostępnymi operatorami, populacją
+- `/[category]` — lista ofert per kategoria z SEO templates z CMS
+- `/[category]/[city]` — oferty per kategoria+miasto z h1Template z CMS
+- `/[category]/[city]/[planSlug]` — pełna strona planu (specs, ceny, features, breadcrumbs, CTA)
+- `/operator/[slug]` — profil operatora (logo, rating, plany, opinie użytkowników)
+
+**Nowe komponenty:**
+- `FilterBar` — client component: min. prędkość, max. cena, technologia, operator, sortowanie
+- `CityCard` — karta miasta z badge wojewódzkie, populacja, voivodeship labels
+
+**Rozbudowane komponenty:**
+- `HeroSearch` — autocomplete z miast CMS, strzałki góra/dół, Escape, polish slugify, click outside
+
+**CMS Admin:**
+- `custom.scss` — dark theme z brand colors (cyan/blue gradient), accent nav, card hover
+
+---
+
 ## v1.3.1 — 2025-05-01
 
 ### CMS Design & UI Tweaks
