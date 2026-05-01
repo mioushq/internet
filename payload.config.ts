@@ -5,6 +5,8 @@ import sharp from 'sharp'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
+import { Logo, Icon } from './src/components/admin/Logo'
+
 import { Users } from './src/collections/Users'
 import { Media } from './src/collections/Media'
 import { Operators } from './src/collections/Operators'
@@ -37,6 +39,12 @@ export default buildConfig({
     user: Users.slug,
     meta: {
       titleSuffix: ' — Porównywarka Internetu CMS',
+    },
+    components: {
+      graphics: {
+        Logo: Logo as any,
+        Icon: Icon as any,
+      },
     },
     importMap: {
       baseDir: path.resolve(dirname),

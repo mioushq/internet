@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.3.1 — 2025-05-01
+
+### CMS Design & UI Tweaks
+- **Branding:** Dodano własne, gradientowe logo ("Porównywarka CMS") oraz ikonę w panelu administracyjnym Payload.
+- **Bugfixes:** Naprawiono błędy z typowaniem TypeScript przy wstrzykiwaniu kastomowych komponentów (`CustomComponent`) bezpośrednio do konfiguracji Payload 3.x.
+
+---
+## v1.3.0 — 2025-05-01
+
+### Integracja Frontend <-> CMS
+- **Payload Local API:** Połączono stronę główną z bazą danych (Server Components) za pomocą `getPayloadClient()`.
+- **Dynamiczne Komponenty:** 
+  - `page.tsx` pobiera aktywne kategorie i promowane oferty (depth: 1).
+  - `OfferCard.tsx` używa ścisłego typowania (`Plan`, `Operator`) i wyświetla dane oraz logo bezpośrednio z Payload.
+  - Dodano `lucide-react` do renderowania ikon wektorowych zdefiniowanych stringiem w Payload (`CategoryCard.tsx`).
+- **Edge Cases:** Zaimplementowano stany puste (empty states), gdy w bazie brakuje kategorii lub przypisanych promocji.
+
+---
 ## v1.2.0 — 2025-05-01
 
 ### Frontend Design (Liquid Glass)
