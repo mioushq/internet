@@ -1,0 +1,1044 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NetSwap — Porównywarka Internetu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  :root{
+    --bg-0:#080826;
+    --bg-1:#0d0a3a;
+    --bg-2:#1a1066;
+    --violet:#5b3df5;
+    --violet-2:#7c5cff;
+    --cyan:#5ee5ff;
+    --magenta:#ff2d8a;
+    --magenta-2:#ff5aa3;
+    --ink:#f4f0ff;
+    --ink-dim:rgba(244,240,255,.72);
+    --ink-mute:rgba(244,240,255,.5);
+    --line:rgba(255,255,255,.14);
+    --glass:rgba(255,255,255,.06);
+    --glass-strong:rgba(255,255,255,.1);
+    --shadow-deep:0 30px 80px -20px rgba(0,0,0,.6), 0 8px 24px -8px rgba(91,61,245,.4);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg-0);color:var(--ink);font-family:'Manrope',sans-serif;-webkit-font-smoothing:antialiased;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse 60% 40% at 15% 10%, rgba(94,229,255,.18), transparent 60%),
+      radial-gradient(ellipse 50% 50% at 90% 20%, rgba(255,45,138,.14), transparent 65%),
+      radial-gradient(ellipse 60% 40% at 80% 90%, rgba(124,92,255,.22), transparent 60%),
+      radial-gradient(ellipse 80% 60% at 20% 100%, rgba(26,16,102,.6), transparent 70%),
+      linear-gradient(180deg, #06061d 0%, #0d0a3a 40%, #1a1066 80%, #2a1280 100%);
+    background-attachment:fixed;
+  }
+  /* fine grain noise */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .12 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    opacity:.5;mix-blend-mode:overlay;
+  }
+  /* glow orbs that drift */
+  .orb{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:0;opacity:.55;}
+  .orb-1{width:520px;height:520px;background:radial-gradient(circle,#5ee5ff 0%, transparent 70%);top:-120px;left:-120px;animation:drift1 22s ease-in-out infinite alternate}
+  .orb-2{width:620px;height:620px;background:radial-gradient(circle,#ff2d8a 0%, transparent 70%);top:30%;right:-200px;animation:drift2 28s ease-in-out infinite alternate}
+  .orb-3{width:480px;height:480px;background:radial-gradient(circle,#7c5cff 0%, transparent 70%);bottom:-150px;left:30%;animation:drift3 26s ease-in-out infinite alternate}
+  @keyframes drift1{to{transform:translate(60px,40px) scale(1.15)}}
+  @keyframes drift2{to{transform:translate(-80px,-60px) scale(.9)}}
+  @keyframes drift3{to{transform:translate(40px,-50px) scale(1.1)}}
+
+  h1,h2,h3,h4{font-family:'Sora',sans-serif;font-weight:700;letter-spacing:-.02em;margin:0;}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+
+  /* ---------- App shell layout ---------- */
+  .stage{position:relative;z-index:1;display:flex;flex-direction:column;gap:48px;padding:32px 24px 80px;}
+  .view-bar{
+    position:sticky;top:16px;z-index:50;align-self:center;
+    display:flex;gap:6px;padding:6px;
+    background:rgba(8,8,38,.55);backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);
+    border:1px solid var(--line);border-radius:999px;
+    box-shadow:0 8px 30px -8px rgba(0,0,0,.6);
+  }
+  .view-bar button{padding:10px 22px;border-radius:999px;font-size:13px;font-weight:600;color:var(--ink-dim);transition:all .25s ease;letter-spacing:.02em}
+  .view-bar button.active{background:linear-gradient(135deg,#5b3df5,#7c5cff);color:#fff;box-shadow:0 6px 20px -4px rgba(124,92,255,.6)}
+  .view-bar button:hover:not(.active){color:var(--ink)}
+
+  .frames{display:grid;grid-template-columns:1fr;gap:64px;justify-items:center;width:100%;max-width:1600px;margin:0 auto}
+  .frames.split{grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:48px}
+
+  /* ---------- Desktop frame ---------- */
+  .desktop{
+    width:100%;max-width:1280px;
+    border-radius:24px;overflow:hidden;
+    background:rgba(13,10,58,.4);
+    border:1px solid var(--line);
+    box-shadow:var(--shadow-deep);
+    position:relative;
+  }
+  .desktop-chrome{display:flex;gap:8px;align-items:center;padding:14px 20px;background:rgba(0,0,0,.3);border-bottom:1px solid var(--line)}
+  .dot{width:12px;height:12px;border-radius:50%}
+  .dot-r{background:#ff5f57}.dot-y{background:#febc2e}.dot-g{background:#28c840}
+  .url-pill{margin-left:14px;flex:1;max-width:420px;padding:6px 14px;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:8px;font-size:12px;color:var(--ink-mute);font-family:'Manrope',sans-serif}
+  .url-pill b{color:var(--ink-dim);font-weight:500}
+
+  .desktop-inner{
+    position:relative;min-height:1500px;
+    background:
+      radial-gradient(ellipse 50% 40% at 10% 10%, rgba(94,229,255,.22), transparent 60%),
+      radial-gradient(ellipse 60% 50% at 95% 30%, rgba(255,45,138,.18), transparent 65%),
+      radial-gradient(ellipse 70% 60% at 50% 100%, rgba(124,92,255,.3), transparent 60%),
+      linear-gradient(180deg,#0a0830 0%,#150a52 45%,#1f0f78 100%);
+  }
+
+  /* nav */
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:24px 56px;position:relative;z-index:5}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-mark{
+    width:42px;height:42px;border-radius:12px;
+    background:linear-gradient(135deg,rgba(94,229,255,.3),rgba(124,92,255,.3));
+    border:1px solid rgba(255,255,255,.18);
+    display:grid;place-items:center;
+    box-shadow:0 0 24px rgba(94,229,255,.3), inset 0 0 12px rgba(255,255,255,.1);
+  }
+  .logo-text{font-family:'Sora',sans-serif;font-weight:800;font-size:17px;letter-spacing:.04em;line-height:1}
+  .logo-text span{display:block;font-size:11px;font-weight:500;letter-spacing:.22em;color:var(--ink-mute);margin-top:3px}
+  .nav-links{display:flex;gap:36px;align-items:center}
+  .nav-links a{color:var(--ink-dim);text-decoration:none;font-size:14px;font-weight:500;transition:color .2s}
+  .nav-links a:hover{color:var(--ink)}
+  .nav-cta{
+    padding:10px 22px;border-radius:999px;
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.2);
+    color:#fff;font-weight:600;font-size:14px;
+    backdrop-filter:blur(8px);
+    transition:all .2s;
+  }
+  .nav-cta:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.4)}
+  .nav-cta.primary{background:linear-gradient(135deg,#ff2d8a,#ff5aa3);border:none;box-shadow:0 8px 24px -6px rgba(255,45,138,.5)}
+  .nav-cta.primary:hover{transform:translateY(-1px);box-shadow:0 12px 30px -6px rgba(255,45,138,.7)}
+
+  /* hero */
+  .hero{padding:48px 56px 24px;text-align:center;position:relative;z-index:4}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:6px 14px;border-radius:999px;
+    background:rgba(255,255,255,.06);border:1px solid var(--line);
+    font-size:12px;color:var(--ink-dim);font-weight:500;letter-spacing:.05em;
+    margin-bottom:24px;
+  }
+  .eyebrow .pulse{width:7px;height:7px;border-radius:50%;background:#5ee5ff;box-shadow:0 0 12px #5ee5ff;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .hero h1{font-size:64px;line-height:1.05;font-weight:800;letter-spacing:-.03em;max-width:880px;margin:0 auto 18px;text-wrap:balance}
+  .hero h1 em{font-style:normal;background:linear-gradient(135deg,#5ee5ff 0%,#7c5cff 50%,#ff2d8a 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p{font-size:18px;color:var(--ink-dim);max-width:580px;margin:0 auto 40px;line-height:1.5}
+
+  /* search panel — fork of the polish reference, glassed up */
+  .search-panel{
+    max-width:1080px;margin:0 auto;
+    background:rgba(255,255,255,.06);
+    backdrop-filter:blur(24px) saturate(150%);-webkit-backdrop-filter:blur(24px) saturate(150%);
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:24px;
+    padding:18px;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.15);
+    position:relative;
+  }
+  .search-panel::before{
+    content:"";position:absolute;inset:0;border-radius:24px;pointer-events:none;
+    background:linear-gradient(135deg,rgba(94,229,255,.15),transparent 40%,rgba(255,45,138,.1));
+    opacity:.6;
+  }
+  .search-row{display:grid;grid-template-columns:auto auto auto 1fr 1fr 100px auto;gap:10px;align-items:stretch;position:relative;z-index:1}
+  .svc-chip{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    width:84px;padding:14px 8px;border-radius:14px;
+    background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.12);
+    transition:all .25s cubic-bezier(.2,.8,.2,1);
+    position:relative;
+  }
+  .svc-chip:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.25);transform:translateY(-2px)}
+  .svc-chip.on{background:linear-gradient(135deg,rgba(94,229,255,.18),rgba(124,92,255,.18));border-color:rgba(94,229,255,.6);box-shadow:0 0 24px rgba(94,229,255,.3), inset 0 1px 0 rgba(255,255,255,.2)}
+  .svc-chip svg{width:26px;height:26px;color:var(--ink);transition:color .2s}
+  .svc-chip.on svg{color:#5ee5ff}
+  .svc-chip .lbl{font-size:12px;font-weight:600;letter-spacing:.02em}
+  .svc-check{position:absolute;top:7px;left:7px;width:14px;height:14px;border-radius:4px;border:1.5px solid rgba(255,255,255,.3);background:rgba(0,0,0,.2);display:grid;place-items:center}
+  .svc-chip.on .svc-check{background:#5ee5ff;border-color:#5ee5ff}
+  .svc-chip.on .svc-check::after{content:"";width:7px;height:4px;border-left:2px solid #0a0830;border-bottom:2px solid #0a0830;transform:rotate(-45deg) translate(0px,-1px)}
+  .field{
+    display:flex;flex-direction:column;justify-content:center;
+    padding:10px 18px;border-radius:14px;
+    background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.12);
+    transition:border .2s,background .2s;
+  }
+  .field:focus-within{border-color:rgba(94,229,255,.5);background:rgba(255,255,255,.07)}
+  .field label{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--ink-mute);font-weight:600;margin-bottom:2px}
+  .field input{background:none;border:none;outline:none;color:var(--ink);font-size:15px;font-weight:500;font-family:inherit;width:100%;padding:0}
+  .field input::placeholder{color:rgba(255,255,255,.35)}
+  .search-btn{
+    padding:0 28px;border-radius:14px;
+    background:linear-gradient(135deg,#ff2d8a,#ff5aa3);
+    color:#fff;font-weight:700;font-size:15px;letter-spacing:.02em;
+    display:flex;align-items:center;gap:10px;
+    box-shadow:0 12px 30px -8px rgba(255,45,138,.6), inset 0 1px 0 rgba(255,255,255,.3);
+    transition:all .2s;
+    white-space:nowrap;
+  }
+  .search-btn:hover{transform:translateY(-2px);box-shadow:0 16px 36px -8px rgba(255,45,138,.8), inset 0 1px 0 rgba(255,255,255,.4)}
+  .search-meta{display:flex;gap:24px;padding:14px 8px 4px;font-size:13px;color:var(--ink-mute);position:relative;z-index:1}
+  .search-meta a{color:var(--cyan);text-decoration:none;display:flex;align-items:center;gap:6px;transition:opacity .2s;opacity:.85}
+  .search-meta a:hover{opacity:1}
+
+  /* category tiles */
+  .category-row{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;padding:64px 56px 24px;position:relative;z-index:3}
+  .cat-card{
+    position:relative;padding:32px 28px 28px;border-radius:24px;
+    background:rgba(255,255,255,.04);
+    backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);
+    border:1px solid rgba(255,255,255,.15);
+    overflow:hidden;
+    transition:all .35s cubic-bezier(.2,.8,.2,1);
+    min-height:260px;
+    display:flex;flex-direction:column;
+  }
+  .cat-card::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,var(--c1) 0%,transparent 50%);opacity:.18;pointer-events:none}
+  .cat-card::after{content:"";position:absolute;top:-2px;left:20%;right:20%;height:2px;background:linear-gradient(90deg,transparent,var(--c2),transparent);opacity:.7}
+  .cat-card:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.3);box-shadow:0 30px 60px -20px rgba(0,0,0,.5), 0 0 40px var(--glow)}
+  .cat-icon{
+    width:60px;height:60px;border-radius:18px;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);
+    display:grid;place-items:center;margin-bottom:20px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 0 24px var(--glow);
+    color:var(--c2);
+  }
+  .cat-card h3{font-size:24px;margin-bottom:6px}
+  .cat-card .sub{color:var(--ink-dim);font-size:14px;margin-bottom:16px}
+  .cat-spec{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:auto}
+  .cat-spec span{font-size:11px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--ink-dim);font-weight:500;letter-spacing:.04em}
+  .cat-cta{
+    margin-top:20px;padding:12px;border-radius:999px;
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.2);
+    text-align:center;font-weight:600;font-size:13px;color:var(--ink);
+    transition:all .25s;
+  }
+  .cat-card:hover .cat-cta{background:var(--c2);border-color:var(--c2);color:#fff;box-shadow:0 0 20px var(--glow)}
+
+  /* deals section */
+  .deals{padding:48px 56px 24px;position:relative;z-index:3}
+  .section-head{display:flex;align-items:end;justify-content:space-between;margin-bottom:32px;gap:24px}
+  .section-head h2{font-size:40px;line-height:1;letter-spacing:-.02em}
+  .section-head h2 em{font-style:normal;background:linear-gradient(135deg,#ff2d8a,#7c5cff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .section-head .meta{color:var(--ink-mute);font-size:14px;max-width:360px;text-align:right}
+
+  .filter-bar{
+    display:flex;gap:8px;padding:6px;margin-bottom:28px;width:fit-content;
+    background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:999px;backdrop-filter:blur(12px);
+  }
+  .filter-bar button{padding:9px 18px;border-radius:999px;font-size:13px;font-weight:600;color:var(--ink-dim);transition:all .25s;white-space:nowrap}
+  .filter-bar button.active{background:rgba(255,255,255,.1);color:var(--ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
+  .filter-bar button:hover:not(.active){color:var(--ink)}
+
+  .deal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  .deal{
+    position:relative;padding:0;border-radius:22px;
+    background:rgba(255,255,255,.05);
+    backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);
+    border:1px solid rgba(255,255,255,.15);
+    transition:transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s, border-color .25s;
+    display:flex;flex-direction:column;
+    margin-top:14px;
+  }
+  .deal:hover{transform:translateY(-6px);border-color:rgba(255,255,255,.28);box-shadow:0 40px 80px -20px rgba(0,0,0,.6), 0 0 50px rgba(124,92,255,.25)}
+  .deal-tag{
+    position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+    padding:7px 18px;border-radius:8px;font-size:11px;font-weight:700;letter-spacing:.12em;
+    color:#fff;text-transform:uppercase;white-space:nowrap;z-index:2;
+  }
+  .deal-tag.bestseller{background:linear-gradient(135deg,#5ee5ff,#3da4ff);box-shadow:0 8px 20px -4px rgba(94,229,255,.5)}
+  .deal-tag.discount{background:linear-gradient(135deg,#7c5cff,#5b3df5);box-shadow:0 8px 20px -4px rgba(124,92,255,.5)}
+  .deal-tag.wow{background:linear-gradient(135deg,#ff2d8a,#ff5aa3);box-shadow:0 8px 20px -4px rgba(255,45,138,.5)}
+  .deal-head{padding:30px 26px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.08)}
+  .provider-logo{
+    height:42px;display:flex;align-items:center;
+  }
+  .provider-logo svg{height:28px}
+  .price{text-align:right}
+  .price .strike{font-size:13px;color:var(--ink-mute);text-decoration:line-through;display:block;line-height:1}
+  .price .amount{font-family:'Sora',sans-serif;font-size:32px;font-weight:700;line-height:1;letter-spacing:-.02em}
+  .price .amount sup{font-size:14px;font-weight:500;color:var(--ink-dim);margin-left:2px;top:-10px;position:relative}
+  .price .per{font-size:11px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:.12em;margin-top:4px}
+
+  .deal-title{padding:18px 26px 6px;font-size:17px;font-weight:600;letter-spacing:-.01em}
+  .deal-speed{padding:0 26px 18px;display:flex;align-items:baseline;gap:8px}
+  .deal-speed .num{font-family:'Sora',sans-serif;font-size:46px;font-weight:800;letter-spacing:-.03em;background:linear-gradient(135deg,#5ee5ff,#7c5cff);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1}
+  .deal-speed .unit{font-size:14px;color:var(--ink-dim);font-weight:500}
+
+  .deal-specs{padding:0 26px 18px;display:flex;flex-direction:column;gap:0;font-size:13px}
+  .spec-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px dashed rgba(255,255,255,.08)}
+  .spec-row:last-child{border-bottom:none}
+  .spec-row .k{color:var(--ink-mute);display:flex;align-items:center;gap:6px}
+  .spec-row .v{color:var(--ink);font-weight:600}
+  .spec-row .v.good{color:#5ee5ff}
+
+  .promo-banner{
+    margin:0 18px;padding:12px 16px;border-radius:14px;
+    background:linear-gradient(135deg,rgba(94,229,255,.12),rgba(124,92,255,.12));
+    border:1px solid rgba(94,229,255,.25);
+    font-size:13px;color:var(--ink);display:flex;align-items:center;gap:10px;
+  }
+  .promo-banner .gift{color:#5ee5ff;flex-shrink:0}
+  .promo-banner b{color:#5ee5ff;font-weight:600}
+
+  .deal-actions{padding:18px 26px 24px;display:flex;flex-direction:column;gap:10px;margin-top:auto}
+  .btn-primary{
+    padding:14px;border-radius:14px;
+    background:linear-gradient(135deg,#ff2d8a,#ff5aa3);
+    color:#fff;font-weight:700;font-size:14px;letter-spacing:.02em;
+    box-shadow:0 12px 30px -8px rgba(255,45,138,.5), inset 0 1px 0 rgba(255,255,255,.25);
+    transition:all .2s;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 36px -8px rgba(255,45,138,.7)}
+  .deal-call{text-align:center;font-size:12px;color:var(--ink-mute)}
+  .deal-call b{color:var(--cyan);font-weight:600;letter-spacing:.02em}
+
+  /* feature strip */
+  .feature-strip{
+    margin:48px 56px 24px;padding:32px 36px;border-radius:24px;
+    background:rgba(255,255,255,.04);
+    backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);
+    border:1px solid rgba(255,255,255,.12);
+    display:grid;grid-template-columns:repeat(4,1fr);gap:24px;
+    position:relative;z-index:3;
+  }
+  .feature-strip > div{display:flex;gap:14px;align-items:flex-start}
+  .fi{width:42px;height:42px;border-radius:12px;background:rgba(94,229,255,.1);border:1px solid rgba(94,229,255,.25);display:grid;place-items:center;color:#5ee5ff;flex-shrink:0}
+  .feature-strip h4{font-size:15px;font-weight:600;margin-bottom:4px}
+  .feature-strip p{font-size:13px;color:var(--ink-mute);margin:0;line-height:1.4}
+
+  /* footer */
+  .desk-footer{margin-top:48px;padding:32px 56px 36px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:24px;color:var(--ink-mute);font-size:13px;position:relative;z-index:3}
+  .desk-footer-links{display:flex;gap:28px}
+  .desk-footer-links a{color:var(--ink-mute);text-decoration:none}
+  .desk-footer-links a:hover{color:var(--ink)}
+
+  /* ---------- Mobile (app-style) frame ---------- */
+  .mobile{
+    width:390px;height:844px;
+    border-radius:54px;
+    background:#000;
+    padding:14px;
+    box-shadow:
+      0 0 0 2px #1c1c1c,
+      0 0 0 3px #2a2a2a,
+      0 50px 100px -20px rgba(0,0,0,.7),
+      0 0 80px rgba(124,92,255,.3);
+    position:sticky;top:60px;
+  }
+  .mobile-screen{
+    position:relative;width:100%;height:100%;border-radius:42px;overflow:hidden;
+    background:
+      radial-gradient(ellipse 60% 30% at 20% 5%, rgba(94,229,255,.3), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 90% 30%, rgba(255,45,138,.18), transparent 65%),
+      radial-gradient(ellipse 80% 50% at 50% 100%, rgba(124,92,255,.4), transparent 60%),
+      linear-gradient(180deg,#0a0830 0%,#1f0f78 60%,#3a1aa8 100%);
+  }
+  .notch{
+    position:absolute;top:10px;left:50%;transform:translateX(-50%);
+    width:120px;height:34px;background:#000;border-radius:20px;z-index:10;
+  }
+  .status{
+    position:absolute;top:0;left:0;right:0;height:50px;
+    display:flex;justify-content:space-between;align-items:center;
+    padding:18px 28px 0;font-size:14px;font-weight:600;color:#fff;font-family:'Sora',sans-serif;z-index:9;
+  }
+  .status-icons{display:flex;gap:6px;align-items:center}
+  .status-icons svg{width:16px;height:11px}
+  .battery{display:flex;align-items:center;gap:2px;font-size:11px;font-weight:700;padding:1px 6px;border:1.5px solid #fff;border-radius:4px;position:relative;line-height:1}
+  .battery::after{content:"";position:absolute;right:-3px;top:3px;width:2px;height:6px;background:#fff;border-radius:0 1px 1px 0}
+
+  .mob-content{
+    position:absolute;inset:50px 0 96px;overflow-y:auto;padding:8px 18px 24px;
+    scrollbar-width:none;
+  }
+  .mob-content::-webkit-scrollbar{display:none}
+
+  .mob-greet{padding:8px 4px 16px}
+  .mob-greet .hi{font-size:13px;color:var(--ink-mute);font-weight:500}
+  .mob-greet .name{font-size:24px;font-weight:700;font-family:'Sora',sans-serif;letter-spacing:-.02em;line-height:1.1}
+  .avatar{
+    position:absolute;top:60px;right:18px;width:38px;height:38px;border-radius:50%;
+    background:linear-gradient(135deg,#5ee5ff,#7c5cff);
+    border:2px solid rgba(255,255,255,.2);
+    display:grid;place-items:center;color:#0a0830;font-weight:700;font-size:14px;
+    box-shadow:0 0 16px rgba(94,229,255,.5);
+  }
+
+  .mob-search{
+    display:flex;align-items:center;gap:10px;
+    padding:12px 16px;border-radius:18px;
+    background:rgba(255,255,255,.08);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,.18);
+    margin-bottom:16px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.15);
+  }
+  .mob-search input{flex:1;background:none;border:none;outline:none;color:#fff;font-size:14px;font-family:inherit}
+  .mob-search input::placeholder{color:rgba(255,255,255,.5)}
+  .mob-search svg{color:rgba(255,255,255,.6)}
+
+  .mob-services{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
+  .mob-svc{
+    padding:14px 8px;border-radius:16px;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    transition:all .25s;
+  }
+  .mob-svc.on{background:linear-gradient(135deg,rgba(94,229,255,.2),rgba(124,92,255,.2));border-color:rgba(94,229,255,.5);box-shadow:0 0 18px rgba(94,229,255,.3)}
+  .mob-svc svg{color:#fff;width:22px;height:22px}
+  .mob-svc.on svg{color:#5ee5ff}
+  .mob-svc .lbl{font-size:11px;font-weight:600;color:#fff}
+
+  .mob-section{display:flex;justify-content:space-between;align-items:center;padding:6px 4px 12px}
+  .mob-section h3{font-size:18px;font-weight:700;font-family:'Sora',sans-serif;letter-spacing:-.02em}
+  .mob-section .more{font-size:12px;color:var(--cyan);font-weight:500}
+
+  /* Hero card mobile - fork of fiber broadband card from ref */
+  .mob-hero-card{
+    position:relative;padding:22px 22px 18px;border-radius:22px;margin-bottom:14px;
+    background:rgba(255,255,255,.08);
+    backdrop-filter:blur(24px) saturate(140%);-webkit-backdrop-filter:blur(24px) saturate(140%);
+    border:1px solid rgba(255,255,255,.18);
+    overflow:hidden;
+    box-shadow:0 20px 40px -10px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.2);
+  }
+  .mob-hero-card.fiber::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(94,229,255,.18),transparent 50%);pointer-events:none}
+  .mob-hero-card.fiber::after{content:"";position:absolute;top:0;left:15%;right:15%;height:1px;background:linear-gradient(90deg,transparent,#5ee5ff,transparent);opacity:.8}
+  .mob-hero-card.g5::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(124,92,255,.2),transparent 50%);pointer-events:none}
+  .mob-hero-card.g5::after{content:"";position:absolute;top:0;left:15%;right:15%;height:1px;background:linear-gradient(90deg,transparent,#7c5cff,transparent);opacity:.8}
+
+  .mhc-row{display:flex;align-items:center;gap:14px;position:relative;z-index:1}
+  .mhc-icon{width:54px;height:54px;border-radius:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);display:grid;place-items:center;flex-shrink:0;color:#5ee5ff;box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
+  .mob-hero-card.g5 .mhc-icon{color:#a89dff}
+  .mhc-text{flex:1;min-width:0}
+  .mhc-text h4{font-size:18px;font-weight:800;font-family:'Sora',sans-serif;letter-spacing:.02em;line-height:1.05;text-transform:uppercase}
+  .mhc-text p{margin:4px 0 0;font-size:12px;color:var(--ink-dim);line-height:1.3}
+  .mhc-cta{
+    margin-top:14px;width:100%;padding:12px;border-radius:999px;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.25);
+    color:#fff;font-weight:600;font-size:13px;
+    transition:all .2s;position:relative;z-index:1;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.2);
+  }
+
+  /* mobile deal card horizontal scroll */
+  .mob-deals{display:flex;gap:12px;overflow-x:auto;padding:4px 4px 8px;margin:0 -18px 18px;padding-left:18px;padding-right:18px;scrollbar-width:none}
+  .mob-deals::-webkit-scrollbar{display:none}
+  .mob-deal{
+    flex:0 0 240px;padding:0;border-radius:20px;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);
+    backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    overflow:hidden;position:relative;
+  }
+  .mob-deal-tag{position:absolute;top:10px;right:10px;padding:3px 8px;border-radius:6px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+  .mob-deal-tag.bs{background:#5ee5ff;color:#0a0830}
+  .mob-deal-tag.wow{background:#ff2d8a;color:#fff}
+  .mob-deal-tag.dc{background:#7c5cff;color:#fff}
+  .mob-deal-head{padding:14px 14px 10px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,.08)}
+  .mob-prov{height:18px;display:flex;align-items:center}
+  .mob-prov svg{height:18px}
+  .mob-deal-body{padding:14px}
+  .mob-deal-speed{font-family:'Sora',sans-serif;font-size:32px;font-weight:800;background:linear-gradient(135deg,#5ee5ff,#7c5cff);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1;letter-spacing:-.02em}
+  .mob-deal-speed sub{font-size:13px;color:var(--ink-dim);font-weight:500;background:none;-webkit-text-fill-color:var(--ink-dim);margin-left:4px;vertical-align:baseline}
+  .mob-deal-name{font-size:12px;color:var(--ink-dim);margin:4px 0 12px}
+  .mob-deal-feats{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+  .mob-deal-feats div{font-size:11px;color:var(--ink-dim);display:flex;align-items:center;gap:6px}
+  .mob-deal-feats svg{color:#5ee5ff;flex-shrink:0}
+  .mob-deal-foot{display:flex;justify-content:space-between;align-items:end;gap:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)}
+  .mob-deal-price{font-family:'Sora',sans-serif;font-size:22px;font-weight:700;letter-spacing:-.02em}
+  .mob-deal-price sub{font-size:11px;color:var(--ink-mute);font-weight:500;vertical-align:baseline;margin-left:2px}
+  .mob-deal-btn{padding:8px 14px;border-radius:999px;background:linear-gradient(135deg,#ff2d8a,#ff5aa3);color:#fff;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;box-shadow:0 6px 14px -4px rgba(255,45,138,.5)}
+
+  /* mobile providers row */
+  .mob-providers{display:flex;gap:8px;overflow-x:auto;margin:0 -18px 12px;padding:4px 18px;scrollbar-width:none}
+  .mob-providers::-webkit-scrollbar{display:none}
+  .mob-prov-pill{
+    flex:0 0 auto;padding:10px 16px;border-radius:14px;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);
+    display:flex;align-items:center;gap:8px;
+    font-size:12px;font-weight:600;color:#fff;
+    backdrop-filter:blur(12px);
+  }
+
+  /* bottom nav */
+  .tabbar{
+    position:absolute;bottom:8px;left:8px;right:8px;height:80px;
+    background:rgba(8,8,38,.55);
+    backdrop-filter:blur(28px) saturate(150%);-webkit-backdrop-filter:blur(28px) saturate(150%);
+    border:1px solid rgba(255,255,255,.15);
+    border-radius:28px;
+    display:flex;justify-content:space-around;align-items:center;
+    padding:0 8px 14px;
+    box-shadow:0 12px 30px -8px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.15);
+  }
+  .tab{
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    padding:8px 4px;flex:1;color:var(--ink-mute);font-size:10px;font-weight:600;
+    transition:color .2s;
+    position:relative;
+  }
+  .tab svg{width:22px;height:22px}
+  .tab.active{color:#5ee5ff}
+  .tab.active::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:24px;height:3px;border-radius:0 0 4px 4px;background:#5ee5ff;box-shadow:0 0 12px #5ee5ff}
+  .home-bar{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:120px;height:4px;border-radius:2px;background:#fff;opacity:.85}
+
+  /* responsive for actual mobile devices viewing this prototype page */
+  @media (max-width:1100px){
+    .frames.split{grid-template-columns:1fr}
+    .mobile{position:relative;top:0}
+  }
+  @media (max-width:900px){
+    .stage{padding:16px}
+    .nav{padding:18px 24px}
+    .hero{padding:32px 24px 16px}
+    .hero h1{font-size:40px}
+    .search-row{grid-template-columns:repeat(3,1fr);gap:8px}
+    .search-row > .field{grid-column:span 3}
+    .search-btn{grid-column:span 3;padding:14px}
+    .category-row{grid-template-columns:1fr;padding:32px 24px 16px}
+    .deals{padding:24px}
+    .deal-grid{grid-template-columns:1fr}
+    .feature-strip{margin:24px;grid-template-columns:1fr 1fr;padding:24px}
+    .desk-footer{padding:24px;flex-direction:column;text-align:center}
+  }
+</style>
+</head>
+<body>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<div id="root"></div>
+
+<script type="text/babel" data-presets="env,react">
+const {useState, useRef, useEffect} = React;
+
+/* ======================= ICONS ======================= */
+const Wifi = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M5 13a10 10 0 0 1 14 0"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M2 9a16 16 0 0 1 20 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg>;
+const Tv = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="3" y="5" width="18" height="13" rx="2"/><path d="M8 21h8M12 18v3"/><path d="M7 9l3 2.5L7 14"/></svg>;
+const Phone = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="6" y="2" width="12" height="20" rx="2.5"/><circle cx="12" cy="18" r="0.8" fill="currentColor"/><path d="M10 5h4"/></svg>;
+const Search = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>;
+const MapPin = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M20 10c0 7-8 12-8 12s-8-5-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>;
+const Help = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 1 1 5.8 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".5" fill="currentColor"/></svg>;
+const ArrowRight = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M5 12h14M13 6l6 6-6 6"/></svg>;
+const Check = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M5 12l5 5L20 7"/></svg>;
+const Gift = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9M12 8v13M12 8s-2-3-4.5-3a2.5 2.5 0 0 0 0 5h4.5M12 8s2-3 4.5-3a2.5 2.5 0 0 1 0 5H12"/></svg>;
+const Download = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 4v12M7 11l5 5 5-5M5 20h14"/></svg>;
+const Upload = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 20V8M7 13l5-5 5 5M5 4h14"/></svg>;
+const Calendar = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>;
+const Router = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="3" y="13" width="18" height="7" rx="1.5"/><circle cx="7" cy="16.5" r=".8" fill="currentColor"/><circle cx="11" cy="16.5" r=".8" fill="currentColor"/><path d="M12 8a4 4 0 0 1 4 4M12 4a8 8 0 0 1 8 8"/></svg>;
+const Database = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>;
+const Bolt = (p) => <svg viewBox="0 0 24 24" fill="currentColor" {...p}><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>;
+const Tower = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M5 3a8 8 0 0 0 0 12M19 3a8 8 0 0 1 0 12M8 6a4 4 0 0 0 0 6M16 6a4 4 0 0 1 0 6"/><circle cx="12" cy="9" r="1.6" fill="currentColor"/><path d="M12 11v10M9 21l3-7 3 7"/></svg>;
+const Cable = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 21c4-4 8-2 12-6s2-8 6-12"/><circle cx="4.5" cy="19.5" r="1.5" fill="currentColor"/><circle cx="19.5" cy="4.5" r="1.5" fill="currentColor"/><path d="M7 17h2M7 14l3 3"/></svg>;
+const Shield = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 3l8 3v6c0 5-3.5 8.5-8 9.5C7.5 20.5 4 17 4 12V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg>;
+const Sparkles = (p) => <svg viewBox="0 0 24 24" fill="currentColor" {...p}><path d="M12 2l1.5 5L18 8.5 13.5 10 12 15l-1.5-5L6 8.5 10.5 7zM19 14l.8 2.5L22 17l-2.2.5L19 20l-.8-2.5L16 17l2.2-.5zM5 16l.6 2L7 18.5l-1.4.5L5 21l-.6-2L3 18.5l1.4-.5z"/></svg>;
+const Headphones = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 14a9 9 0 1 1 18 0"/><path d="M3 14v3a3 3 0 0 0 3 3h1v-7H6a3 3 0 0 0-3 3zM21 14v3a3 3 0 0 1-3 3h-1v-7h1a3 3 0 0 1 3 3z"/></svg>;
+const Home = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>;
+const Compare = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M5 4v14M5 18l-2-3M5 18l2-3M19 6v14M19 6l-2 3M19 6l2 3M3 11h6m6 6h6"/></svg>;
+const List = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>;
+const User = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>;
+const Signal = (p) => <svg viewBox="0 0 18 12" fill="currentColor" {...p}><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="4.5" y="6" width="3" height="6" rx="0.5"/><rect x="9" y="3" width="3" height="9" rx="0.5"/><rect x="13.5" y="0" width="3" height="12" rx="0.5"/></svg>;
+const WifiSm = (p) => <svg viewBox="0 0 18 12" fill="currentColor" {...p}><path d="M9 11.5a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4zM5.5 7.5a5 5 0 0 1 7 0l-1 1a3.5 3.5 0 0 0-5 0l-1-1zM2.5 4.5a9 9 0 0 1 13 0l-1 1a7.5 7.5 0 0 0-11 0l-1-1z"/></svg>;
+const Star = (p) => <svg viewBox="0 0 24 24" fill="currentColor" {...p}><path d="M12 2l3 7 7.5.6-5.7 4.9 1.8 7.4L12 18l-6.6 4 1.8-7.4L1.5 9.6 9 9z"/></svg>;
+const Tag = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 11V4a1 1 0 0 1 1-1h7l10 10-8 8-10-10z"/><circle cx="7.5" cy="7.5" r="1.2" fill="currentColor"/></svg>;
+
+/* ======================= PROVIDER LOGOS (stylized SVG) ======================= */
+const NetiaLogo = () => (
+  <svg viewBox="0 0 100 28" xmlns="http://www.w3.org/2000/svg">
+    <text x="0" y="22" fontFamily="Sora, sans-serif" fontWeight="800" fontSize="22" fill="#5ee5ff" letterSpacing="-.5">netia</text>
+    <circle cx="86" cy="14" r="6" fill="none" stroke="#ff2d8a" strokeWidth="2.5"/>
+    <circle cx="86" cy="14" r="2" fill="#ff2d8a"/>
+  </svg>
+);
+const OrangeLogo = () => (
+  <svg viewBox="0 0 110 28" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="2" width="24" height="24" rx="2" fill="#ff8a1f"/>
+    <text x="30" y="22" fontFamily="Sora, sans-serif" fontWeight="700" fontSize="20" fill="#fff">orange</text>
+  </svg>
+);
+const TmobileLogo = () => (
+  <svg viewBox="0 0 120 28" xmlns="http://www.w3.org/2000/svg">
+    <text x="0" y="22" fontFamily="Sora, sans-serif" fontWeight="800" fontSize="22" fill="#ff2d8a" letterSpacing="-1">T</text>
+    <circle cx="18" cy="20" r="1.6" fill="#ff2d8a"/>
+    <circle cx="23" cy="20" r="1.6" fill="#ff2d8a"/>
+    <circle cx="28" cy="20" r="1.6" fill="#ff2d8a"/>
+    <text x="34" y="22" fontFamily="Manrope, sans-serif" fontWeight="600" fontSize="18" fill="#fff">Mobile</text>
+  </svg>
+);
+const PlayLogo = () => (
+  <svg viewBox="0 0 80 28" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="14" cy="14" r="12" fill="#7c5cff"/>
+    <path d="M11 9l8 5-8 5z" fill="#fff"/>
+    <text x="32" y="20" fontFamily="Sora, sans-serif" fontWeight="700" fontSize="16" fill="#fff">Play</text>
+  </svg>
+);
+const VectraLogo = () => (
+  <svg viewBox="0 0 100 28" xmlns="http://www.w3.org/2000/svg">
+    <path d="M2 6 L10 22 L18 6 Z" fill="#5ee5ff"/>
+    <text x="24" y="22" fontFamily="Sora, sans-serif" fontWeight="700" fontSize="18" fill="#fff">vectra</text>
+  </svg>
+);
+const InteaLogo = () => (
+  <svg viewBox="0 0 100 28" xmlns="http://www.w3.org/2000/svg">
+    <text x="0" y="22" fontFamily="Sora, sans-serif" fontWeight="800" fontSize="20" fill="#fff">INEA</text>
+    <circle cx="58" cy="14" r="3" fill="#ff8a1f"/>
+  </svg>
+);
+
+/* ======================= DATA ======================= */
+const DEALS = [
+  {
+    id:'netia',
+    provider:'Netia',
+    Logo: NetiaLogo,
+    tag:{label:'BESTSELLER', kind:'bestseller'},
+    title:'Internet stacjonarny',
+    speed:600,
+    price:65,
+    services:['Internet'],
+    technology:'fiber',
+    specs:{limit:'bez limitu', up:'100 Mb/s', modem:'w cenie', activation:'79,00 zł', term:'24 mies.', delivery:'do 48 h'},
+    promo:'3 miesiące za 0 zł + Pakiet startowy',
+    extra:'Empik · Zalando · Pyszne.pl — bony do 350 zł',
+  },
+  {
+    id:'orange',
+    provider:'Orange',
+    Logo: OrangeLogo,
+    tag:{label:'RABAT 10 ZŁ NA ABONAMENT', kind:'discount'},
+    title:'Internet światłowodowy',
+    speed:600,
+    price:70,
+    oldPrice:80,
+    services:['Internet'],
+    technology:'fiber',
+    specs:{limit:'bez limitu', up:'100 Mb/s', modem:'4,99 zł/mies.', activation:'0,00 zł', term:'24 mies.', delivery:'do 48 h'},
+    promo:'Rabat 10 zł i brak opłaty aktywacyjnej',
+    extra:'Bony Empik & Zalando do 200 zł',
+  },
+  {
+    id:'tmobile',
+    provider:'T-Mobile',
+    Logo: TmobileLogo,
+    tag:{label:'OFERTA, ŻE WOW!', kind:'wow'},
+    title:'Światłowód Premium',
+    speed:900,
+    price:50,
+    services:['Internet'],
+    technology:'fiber',
+    specs:{limit:'bez limitu', up:'300 Mb/s', modem:'w cenie', activation:'0,00 zł', term:'24 mies.', delivery:'do 72 h'},
+    promo:'Oferta tylko dla nowych Klientów!',
+    extra:'Pakiet bezpieczeństwa Cyber Shield gratis',
+  },
+];
+
+const MOBILE_DEALS = [
+  { id:'tm', Logo:TmobileLogo, tag:{label:'WOW', cls:'wow'}, speed:900, name:'Światłowód 900', feats:['Bez limitu','Modem w cenie','Cyber Shield gratis'], price:50 },
+  { id:'nt', Logo:NetiaLogo, tag:{label:'TOP', cls:'bs'}, speed:600, name:'Stacjonarny 600', feats:['3 mies. za 0 zł','Bony 350 zł','Modem w cenie'], price:65 },
+  { id:'or', Logo:OrangeLogo, tag:{label:'-10 ZŁ', cls:'dc'}, speed:600, name:'Światłowód 600', feats:['Brak aktywacji','Bony 200 zł','Bez limitu'], price:70 },
+];
+
+/* ======================= DESKTOP ======================= */
+function DesktopView(){
+  const [services, setServices] = useState({Internet:true, TV:false, Telefon:false});
+  const [filter, setFilter] = useState('Wszystkie');
+  const [city, setCity] = useState('Warszawa');
+  const [street, setStreet] = useState('');
+  const [num, setNum] = useState('');
+
+  const toggleSvc = k => setServices(s => ({...s, [k]: !s[k]}));
+
+  const filters = ['Wszystkie','Światłowód','5G Home','Internet + TV','Internet + Telefon'];
+
+  return (
+    <div className="desktop">
+      <div className="desktop-chrome">
+        <span className="dot dot-r"></span>
+        <span className="dot dot-y"></span>
+        <span className="dot dot-g"></span>
+        <div className="url-pill">🔒 <b>netswap.pl</b>/szukaj</div>
+      </div>
+      <div className="desktop-inner">
+        {/* nav */}
+        <nav className="nav">
+          <div className="logo">
+            <div className="logo-mark">
+              <Wifi style={{width:22,height:22,color:'#5ee5ff'}}/>
+            </div>
+            <div className="logo-text">NETSWAP<span>porównywarka</span></div>
+          </div>
+          <div className="nav-links">
+            <a href="#">Oferty</a>
+            <a href="#">Test prędkości</a>
+            <a href="#">Strefa okazji</a>
+            <a href="#">Pomoc</a>
+            <a href="#">Zaloguj</a>
+            <button className="nav-cta primary">Załóż konto</button>
+          </div>
+        </nav>
+
+        {/* hero */}
+        <section className="hero">
+          <div className="eyebrow"><span className="pulse"></span> 4 218 ofert dostępnych w Polsce</div>
+          <h1>Znajdź najlepszy internet <em>na Twojej ulicy</em></h1>
+          <p>Porównaj oferty stacjonarne, światłowód i 5G od wszystkich operatorów. Bez ukrytych kosztów, w 60 sekund.</p>
+
+          {/* search panel */}
+          <div className="search-panel">
+            <div className="search-row">
+              <button className={'svc-chip ' + (services.Internet ? 'on' : '')} onClick={() => toggleSvc('Internet')}>
+                <span className="svc-check"></span>
+                <Wifi/>
+                <span className="lbl">Internet</span>
+              </button>
+              <button className={'svc-chip ' + (services.TV ? 'on' : '')} onClick={() => toggleSvc('TV')}>
+                <span className="svc-check"></span>
+                <Tv/>
+                <span className="lbl">Telewizja</span>
+              </button>
+              <button className={'svc-chip ' + (services.Telefon ? 'on' : '')} onClick={() => toggleSvc('Telefon')}>
+                <span className="svc-check"></span>
+                <Phone/>
+                <span className="lbl">Telefon</span>
+              </button>
+              <div className="field">
+                <label>Miasto</label>
+                <input value={city} onChange={e => setCity(e.target.value)} placeholder="np. Warszawa" />
+              </div>
+              <div className="field">
+                <label>Ulica</label>
+                <input value={street} onChange={e => setStreet(e.target.value)} placeholder="Marszałkowska" />
+              </div>
+              <div className="field">
+                <label>Nr</label>
+                <input value={num} onChange={e => setNum(e.target.value)} placeholder="12A" />
+              </div>
+              <button className="search-btn">
+                <Search style={{width:18,height:18}}/>
+                Szukaj ofert
+              </button>
+            </div>
+            <div className="search-meta">
+              <a href="#"><MapPin style={{width:14,height:14}}/>Zlokalizuj mnie</a>
+              <a href="#"><Help style={{width:14,height:14}}/>Dlaczego pytamy o adres?</a>
+              <a href="#" style={{color:'rgba(255,255,255,.55)',marginLeft:'auto'}}>Zobacz mapę pokrycia →</a>
+            </div>
+          </div>
+        </section>
+
+        {/* category cards */}
+        <section className="category-row">
+          <div className="cat-card" style={{'--c1':'#5ee5ff','--c2':'#5ee5ff','--glow':'rgba(94,229,255,.2)'}}>
+            <div className="cat-icon"><Bolt style={{width:28,height:28}}/></div>
+            <h3>Światłowód</h3>
+            <div className="sub">Najszybszy internet w domu</div>
+            <div className="cat-spec">
+              <span>do 8 Gb/s</span>
+              <span>Symetryczny</span>
+              <span>Bez limitu</span>
+            </div>
+            <div className="cat-cta">Porównaj światłowód →</div>
+          </div>
+          <div className="cat-card" style={{'--c1':'#7c5cff','--c2':'#7c5cff','--glow':'rgba(124,92,255,.2)'}}>
+            <div className="cat-icon"><Tower style={{width:28,height:28}}/></div>
+            <h3>5G Home</h3>
+            <div className="sub">Bezprzewodowa wolność</div>
+            <div className="cat-spec">
+              <span>do 1 Gb/s</span>
+              <span>Bez instalacji</span>
+              <span>Plug & play</span>
+            </div>
+            <div className="cat-cta">Sprawdź 5G →</div>
+          </div>
+          <div className="cat-card" style={{'--c1':'#ff5aa3','--c2':'#ff5aa3','--glow':'rgba(255,90,163,.2)'}}>
+            <div className="cat-icon"><Cable style={{width:28,height:28}}/></div>
+            <h3>Kabel + TV</h3>
+            <div className="sub">Pakiety multimedialne</div>
+            <div className="cat-spec">
+              <span>do 1 Gb/s</span>
+              <span>200+ kanałów</span>
+              <span>Telefon w cenie</span>
+            </div>
+            <div className="cat-cta">Zobacz pakiety →</div>
+          </div>
+        </section>
+
+        {/* deals */}
+        <section className="deals">
+          <div className="section-head">
+            <h2>Strefa <em>okazji</em></h2>
+            <div className="meta">Ręcznie wybrane przez nasz zespół. Aktualizowane codziennie o 9:00.</div>
+          </div>
+          <div className="filter-bar">
+            {filters.map(f => (
+              <button key={f} className={f === filter ? 'active' : ''} onClick={() => setFilter(f)}>{f}</button>
+            ))}
+          </div>
+          <div className="deal-grid">
+            {DEALS.map(d => <DealCard key={d.id} d={d}/>)}
+          </div>
+        </section>
+
+        {/* feature strip */}
+        <section className="feature-strip">
+          <div>
+            <div className="fi"><Shield/></div>
+            <div>
+              <h4>Sprawdzeni operatorzy</h4>
+              <p>Tylko oferty z legalnych źródeł, weryfikowane co tydzień.</p>
+            </div>
+          </div>
+          <div>
+            <div className="fi"><Sparkles/></div>
+            <div>
+              <h4>Bonusy i prezenty</h4>
+              <p>Bony Empik, Zalando i Pyszne.pl tylko u nas.</p>
+            </div>
+          </div>
+          <div>
+            <div className="fi"><Headphones/></div>
+            <div>
+              <h4>Doradca 7 dni / tyg.</h4>
+              <p>Pomożemy wybrać i zamówić. Konsultacja gratis.</p>
+            </div>
+          </div>
+          <div>
+            <div className="fi"><Bolt style={{width:20,height:20}}/></div>
+            <div>
+              <h4>Instalacja w 48h</h4>
+              <p>Od zamówienia do pierwszego logowania &lt; 2 dni.</p>
+            </div>
+          </div>
+        </section>
+
+        <footer className="desk-footer">
+          <div className="logo">
+            <div className="logo-mark"><Wifi style={{width:18,height:18,color:'#5ee5ff'}}/></div>
+            <div className="logo-text" style={{fontSize:14}}>NETSWAP</div>
+          </div>
+          <div className="desk-footer-links">
+            <a href="#">Strefa okazji</a>
+            <a href="#">Test prędkości</a>
+            <a href="#">Mapa pokrycia</a>
+            <a href="#">Regulamin</a>
+            <a href="#">Polityka prywatności</a>
+            <a href="#">Kontakt</a>
+          </div>
+          <div>© 2026 NetSwap · v4.2</div>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+function DealCard({d}){
+  const Logo = d.Logo;
+  const tagClass = d.tag.kind;
+  return (
+    <article className="deal">
+      <div className={'deal-tag ' + tagClass}>{d.tag.label}</div>
+      <div className="deal-head">
+        <div className="provider-logo"><Logo/></div>
+        <div className="price">
+          {d.oldPrice && <span className="strike">{d.oldPrice},00 zł</span>}
+          <span className="amount">{d.price}<sup>,00 zł</sup></span>
+          <div className="per">miesięcznie</div>
+        </div>
+      </div>
+      <div className="deal-title">{d.title}</div>
+      <div className="deal-speed">
+        <span className="num">{d.speed}</span>
+        <span className="unit">Mb/s · {d.technology === 'fiber' ? 'światłowód' : 'kabel'}</span>
+      </div>
+      <div className="deal-specs">
+        <div className="spec-row"><span className="k"><Database style={{width:13,height:13}}/>Limit</span><span className="v good">{d.specs.limit}</span></div>
+        <div className="spec-row"><span className="k"><Upload style={{width:13,height:13}}/>Wysyłanie</span><span className="v">{d.specs.up}</span></div>
+        <div className="spec-row"><span className="k"><Router style={{width:13,height:13}}/>Modem WiFi</span><span className="v">{d.specs.modem}</span></div>
+        <div className="spec-row"><span className="k"><Tag style={{width:13,height:13}}/>Aktywacja</span><span className="v">{d.specs.activation}</span></div>
+        <div className="spec-row"><span className="k"><Calendar style={{width:13,height:13}}/>Umowa</span><span className="v">{d.specs.term}</span></div>
+        <div className="spec-row"><span className="k"><Bolt style={{width:13,height:13}}/>Dostawa</span><span className="v">{d.specs.delivery}</span></div>
+      </div>
+      <div className="promo-banner">
+        <Gift style={{width:20,height:20}} className="gift"/>
+        <span><b>Promocja:</b> {d.promo}</span>
+      </div>
+      <div className="deal-actions">
+        <button className="btn-primary">Zobacz ofertę <ArrowRight style={{width:16,height:16}}/></button>
+        <div className="deal-call">Zamów telefonicznie <b>22 122 33 44</b></div>
+      </div>
+    </article>
+  );
+}
+
+/* ======================= MOBILE ======================= */
+function MobileView(){
+  const [services, setServices] = useState({Internet:true, TV:false, Telefon:false});
+  const [tab, setTab] = useState('home');
+  const toggleSvc = k => setServices(s => ({...s, [k]: !s[k]}));
+
+  return (
+    <div className="mobile">
+      <div className="mobile-screen">
+        <div className="notch"></div>
+        <div className="status">
+          <span>10:09</span>
+          <div className="status-icons">
+            <Signal/>
+            <WifiSm/>
+            <span className="battery">88</span>
+          </div>
+        </div>
+
+        <div className="avatar">JN</div>
+
+        <div className="mob-content">
+          <div className="mob-greet">
+            <div className="hi">Cześć, Jakub</div>
+            <div className="name">Czas na lepszy<br/>internet.</div>
+          </div>
+
+          <div className="mob-search">
+            <Search style={{width:18,height:18}}/>
+            <input placeholder="Wyszukaj operatora lub adres..." />
+          </div>
+
+          <div className="mob-services">
+            <button className={'mob-svc ' + (services.Internet ? 'on' : '')} onClick={() => toggleSvc('Internet')}>
+              <Wifi/>
+              <span className="lbl">Internet</span>
+            </button>
+            <button className={'mob-svc ' + (services.TV ? 'on' : '')} onClick={() => toggleSvc('TV')}>
+              <Tv/>
+              <span className="lbl">Telewizja</span>
+            </button>
+            <button className={'mob-svc ' + (services.Telefon ? 'on' : '')} onClick={() => toggleSvc('Telefon')}>
+              <Phone/>
+              <span className="lbl">Telefon</span>
+            </button>
+          </div>
+
+          {/* Hero cards */}
+          <div className="mob-hero-card fiber">
+            <div className="mhc-row">
+              <div className="mhc-icon"><Bolt style={{width:24,height:24}}/></div>
+              <div className="mhc-text">
+                <h4>ŚWIATŁOWÓD<br/>DO 8 GB/S</h4>
+                <p>Najszybsza opcja, bez limitu danych</p>
+              </div>
+            </div>
+            <button className="mhc-cta">Porównaj światłowód</button>
+          </div>
+
+          <div className="mob-hero-card g5">
+            <div className="mhc-row">
+              <div className="mhc-icon"><Tower style={{width:24,height:24}}/></div>
+              <div className="mhc-text">
+                <h4>5G HOME<br/>INTERNET</h4>
+                <p>Szybka instalacja, działa od ręki</p>
+              </div>
+            </div>
+            <button className="mhc-cta">Sprawdź 5G</button>
+          </div>
+
+          {/* Featured offers */}
+          <div className="mob-section">
+            <h3>Strefa okazji</h3>
+            <a className="more" href="#">Pokaż wszystkie →</a>
+          </div>
+          <div className="mob-deals">
+            {MOBILE_DEALS.map(d => {
+              const Logo = d.Logo;
+              return (
+                <div key={d.id} className="mob-deal">
+                  <span className={'mob-deal-tag ' + d.tag.cls}>{d.tag.label}</span>
+                  <div className="mob-deal-head">
+                    <div className="mob-prov"><Logo/></div>
+                  </div>
+                  <div className="mob-deal-body">
+                    <div className="mob-deal-speed">{d.speed}<sub>Mb/s</sub></div>
+                    <div className="mob-deal-name">{d.name}</div>
+                    <div className="mob-deal-feats">
+                      {d.feats.map(f => <div key={f}><Check style={{width:11,height:11}}/>{f}</div>)}
+                    </div>
+                    <div className="mob-deal-foot">
+                      <div className="mob-deal-price">{d.price} zł<sub>/mies.</sub></div>
+                      <button className="mob-deal-btn">Sprawdź</button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Featured providers */}
+          <div className="mob-section">
+            <h3>Operatorzy</h3>
+            <a className="more" href="#">Wszyscy →</a>
+          </div>
+          <div className="mob-providers">
+            <div className="mob-prov-pill"><NetiaLogo/></div>
+            <div className="mob-prov-pill"><OrangeLogo/></div>
+            <div className="mob-prov-pill"><TmobileLogo/></div>
+            <div className="mob-prov-pill"><PlayLogo/></div>
+            <div className="mob-prov-pill"><VectraLogo/></div>
+            <div className="mob-prov-pill"><InteaLogo/></div>
+          </div>
+
+          <div style={{height:8}}></div>
+        </div>
+
+        <div className="tabbar">
+          <button className={'tab ' + (tab === 'home' ? 'active' : '')} onClick={() => setTab('home')}><Home/><span>Start</span></button>
+          <button className={'tab ' + (tab === 'search' ? 'active' : '')} onClick={() => setTab('search')}><Search/><span>Szukaj</span></button>
+          <button className={'tab ' + (tab === 'plans' ? 'active' : '')} onClick={() => setTab('plans')}><List/><span>Oferty</span></button>
+          <button className={'tab ' + (tab === 'compare' ? 'active' : '')} onClick={() => setTab('compare')}><Compare/><span>Porównaj</span></button>
+          <button className={'tab ' + (tab === 'profile' ? 'active' : '')} onClick={() => setTab('profile')}><User/><span>Profil</span></button>
+        </div>
+        <div className="home-bar"></div>
+      </div>
+    </div>
+  );
+}
+
+/* ======================= APP ======================= */
+function App(){
+  const [view, setView] = useState('split'); // 'desktop','mobile','split'
+
+  return (
+    <div className="stage">
+      <div className="view-bar">
+        <button className={view === 'desktop' ? 'active' : ''} onClick={() => setView('desktop')}>Desktop</button>
+        <button className={view === 'mobile' ? 'active' : ''} onClick={() => setView('mobile')}>Mobile</button>
+        <button className={view === 'split' ? 'active' : ''} onClick={() => setView('split')}>Oba widoki</button>
+      </div>
+
+      <div className={'frames ' + (view === 'split' ? 'split' : '')}>
+        {(view === 'desktop' || view === 'split') && <DesktopView/>}
+        {(view === 'mobile' || view === 'split') && <MobileView/>}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
